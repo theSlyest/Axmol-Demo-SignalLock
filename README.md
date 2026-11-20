@@ -1,152 +1,142 @@
-# Axmol Examples
+# Axmol Demo: Signal Lock
 
-A collection of small games, gameplay mechanics, and technical demonstrations built with [Axmol Engine](https://axmol.dev/) and C++.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-The purpose of this repository is to provide compact, practical examples that can be studied, modified, and reused when learning Axmol or prototyping game mechanics.
+A small tuning game built with [Axmol Engine](https://axmol.dev/) and C++, written as a learning resource. A hidden station is somewhere on a radio dial, and a glitchy TV test pattern clears up as you get close to it. The game rules, the custom glitch shader and the views are separate pieces, so each can be read on its own.
 
-## Repository Structure
+![Gameplay screenshot](docs/screenshot.png)
 
-Each example is stored in its own Git branch.
+## Gameplay
 
-The `master` branch contains the base Axmol project used as a starting point. To explore an example, switch to the corresponding branch:
+- Hold **LEFT** or **RIGHT** (or **A** or **D**) to slide the tuning arrow along the dial. Press **R** to restart.
+- The arrow moves at 0.3 of the dial per second. If you hold both directions, the key pressed last wins.
+- The round starts with your first tuning key, and you have **45 seconds**.
+- The picture on the screen is garbled when you are far from the station, and clears up inside 0.2 of the dial.
+- Stay within 0.03 of the station for **0.6 seconds** and it locks: you score a point and a new station appears, at least 0.25 of the dial away.
+- When the time runs out, the round is over and your score is shown.
 
-```bash
-git clone https://github.com/theSlyest/AxmolExamples.git
-cd AxmolExamples
-git switch <example-branch>
-```
-
-For example:
-
-```bash
-git switch Minesweeper
-```
-
-You can list all available example branches with:
-
-```bash
-git branch --remotes
-```
-
-## Available Examples
-
-### Mini-games and puzzles
-
-| Branch         | Description                                                             |
-| -------------- | ----------------------------------------------------------------------- |
-| `Bomberman`    | A small game inspired by classic grid-based bomb mechanics.             |
-| `BrickBreaker` | A brick-breaking game with paddle, ball, and collision mechanics.       |
-| `Cooking`      | A cooking-themed gameplay prototype.                                    |
-| `CrossTheRoad` | A road-crossing game based on movement, timing, and obstacle avoidance. |
-| `DiskTower`    | A Tower of Hanoi-style puzzle.                                          |
-| `GridBalancer` | A grid-based balancing puzzle.                                          |
-| `Minesweeper`  | An implementation of the classic Minesweeper game.                      |
-| `Nonogram`     | A picture-logic puzzle based on row and column clues.                   |
-| `PegSolitaire` | An implementation of the classic peg solitaire puzzle.                  |
-| `Pentago`      | A board game featuring piece placement and rotating board sections.     |
-| `PoseMatch`    | A pose-matching gameplay prototype.                                     |
-| `Reversi`      | An implementation of the classic Reversi/Othello board game.            |
-| `RushHour`     | A sliding-block puzzle inspired by Rush Hour.                           |
-| `ShadowShape`  | A shape and shadow-matching game.                                       |
-| `Snake`        | An implementation of the classic Snake game.                            |
-| `Sudoku`       | An implementation of the classic number-placement puzzle.               |
-| `TetraStack`   | A block-stacking game using tetromino-like pieces.                      |
-| `WordGame`     | A word-based game prototype.                                            |
-
-### Action and gameplay mechanics
-
-| Branch             | Description                                                    |
-| ------------------ | -------------------------------------------------------------- |
-| `Escorting`        | An escort-oriented gameplay prototype.                         |
-| `LaserMirror`      | A laser-routing mechanic using reflective objects.             |
-| `RippleTank`       | A tank-based gameplay experiment featuring ripple effects.     |
-| `SideShooter`      | A side-view shooting game prototype.                           |
-| `SignalLock`       | A signal-based locking or synchronization mechanic.            |
-| `StealthDetection` | A demonstration of visibility and stealth-detection mechanics. |
-| `Teleporter`       | A teleportation gameplay mechanic.                             |
-
-### Technical and narrative examples
-
-| Branch        | Description                                                           |
-| ------------- | --------------------------------------------------------------------- |
-| `Clones`      | A gameplay experiment involving duplicated or synchronized entities.  |
-| `PathFinding` | A demonstration of pathfinding and grid navigation.                   |
-| `VisualNovel` | A basic visual-novel structure with narrative and dialogue mechanics. |
-
-> The examples are intentionally small and focused. They are designed as learning resources and prototypes rather than production-ready games.
+There are no image assets: the dial and the TV are drawn with `DrawNode`, and the test pattern is generated pixel by pixel.
 
 ## Requirements
 
 * A C++ development environment
 * [CMake](https://cmake.org/) 3.22 or later
-* [Axmol Engine](https://github.com/axmolengine/axmol)
-* The platform-specific tools required by Axmol
+* [Axmol Engine](https://github.com/axmolengine/axmol) 2.x and the platform tools it requires
 
-The base project currently targets Axmol Engine **2.11.4**.
+Refer to the [Axmol documentation](https://axmol.dev/manual/latest/) for installation and platform setup.
 
-Refer to the [Axmol documentation](https://axmol.dev/manual/latest/) for engine installation and platform setup instructions.
+## Build and run
 
-## Building an Example
-
-First, install and configure Axmol Engine. Then clone this repository and select the example you want to build:
+Clone the repository, then use the Axmol command-line tools:
 
 ```bash
-git clone https://github.com/theSlyest/AxmolExamples.git
-cd AxmolExamples
-git switch <example-branch>
+git clone https://github.com/theSlyest/Axmol-Demo-SignalLock.git
+cd Axmol-Demo-SignalLock
+axmol run -p osx -a arm64    # build and launch on Apple Silicon macOS
 ```
 
-Build the project using the standard Axmol workflow for your target platform.
+Change `-p` (and `-a`) for your platform, for example `-p win32` or `-p linux`. To build without launching, use `axmol build` with the same options. The platform project folders (`proj.android`, `proj.ios_mac`, `proj.linux`, `proj.wasm`, `proj.win32`, `proj.winrt`) come from the Axmol project template.
 
-For example, after configuring the Axmol command-line tools:
+## How the code is organized
+
+The scene only builds nodes and connects them. The rules know nothing about nodes, and the views know nothing about the rules.
+
+```
+SignalLockScene          builds the nodes, wires everything, forwards update(dt),
+ │                       copies the game's state onto the views
+ ├─ SignalLockGame       rules and state; calls onScoreChanged / onTimeChanged / onGameOver
+ ├─ SignalControls       keyboard -> direction (-1, 0, +1) and onRestart
+ ├─ SignalScreen         the TV and its glitch shader; setGlitchAmplitude(0..1)
+ ├─ SignalDial           ruler and tuning arrow; setValue(0..1) and lockTo(0..1)
+ ├─ SignalHud            score and time labels
+ └─ SignalGameOverLayer  "ROUND OVER" overlay with the final score
+```
+
+Each frame the scene passes the held direction from `SignalControls` to `SignalLockGame::update`. The game moves the dial, measures the distance to the station and advances the lock and the clock. The scene then copies the dial value, the lock progress and the glitch amount onto the views, and updates the labels and the overlay from the game's callbacks.
+
+### The glitch shader
+
+`Shaders/tv_glitch.frag` is a fragment shader in Axmol's source format (`#version 310 es`, with `COLOR0`, `TEXCOORD0` and `SV_Target0` locations and a plain `fs_ub` uniform block). The build compiles it with `axslcc` into a program for each backend (MSL on Metal, GLSL on OpenGL, and so on), and `SignalScreen` loads the compiled program by name:
+
+```cpp
+ProgramManager::getInstance()->loadProgram(positionTextureColor_vert, "custom/tv_glitch_fs", VertexLayoutType::Sprite);
+```
+
+Each frame `SignalScreen` sets two uniforms, `u_time` and `u_amplitude`. The amplitude is the glitch amount from the game: at 0 the shader returns the plain picture, and at 1 it applies the full jitter, RGB split, scanlines and noise.
+
+The shader is compiled from `CMakeLists.txt` rather than by putting it in `Source/shaders`. Axmol compiles that folder for every target, and the unit test target would then compile the same shader a second time, which CMake rejects.
+
+### Try it: change the rules
+
+The rules are constants at the top of `SignalLockGame`:
+
+```cpp
+static constexpr float TUNE_SPEED = 0.3f;   // dial widths per second
+static constexpr float LOCK_DELAY = 0.6f;   // seconds on the station to lock it
+static constexpr int START_TIME = 45;       // seconds per round
+```
+
+To make a round predictable while you experiment, give the game a fixed random source. The game calls it to choose each station:
+
+```cpp
+// Always put the station at 90% of the dial (or at the far end if that is too close).
+_game = std::make_unique<SignalLockGame>([] { return 0.9f; });
+```
+
+## What this example shows
+
+| Concept | Where |
+| --- | --- |
+| Scene setup and wiring the parts together | `SignalLockScene` |
+| Game rules with no engine dependency, reporting changes through callbacks | `SignalLockGame` |
+| An injectable random source, so the rules can be tested deterministically | `SignalLockGame::Random` |
+| A custom fragment shader with uniforms (jitter, RGB split, scanlines, noise) | `Shaders/tv_glitch.frag`, `SignalScreen` |
+| Compiling an app shader for every backend and loading it by name | `CMakeLists.txt`, `SignalScreen::initShaderProgram` |
+| A texture built from a pixel buffer | `SignalScreen::createPicture` |
+| Clipping to a rounded rectangle with `ClippingNode` | `SignalScreen` |
+| Procedural drawing with `DrawNode`, no image assets | `SignalDial`, `SignalScreen` |
+| Keyboard input that tracks which keys are held | `SignalControls` |
+| Views that only show state they are given | `SignalDial`, `SignalScreen`, `SignalHud`, `SignalGameOverLayer` |
+| Unit tests with doctest | `Tests/` |
+
+## Tests
+
+`SignalLockGame` has no nodes, so it runs in a plain test program. `Tests/SignalLockGameTest.cpp` uses [doctest](https://github.com/doctest/doctest), which Axmol bundles, and a fixed sequence of "random" numbers to cover:
+
+- the start state, the clock waiting for the first tuning key, and a key held through a restart
+- how stations are chosen: too close is rejected, exactly `LOCK_SAFE` is accepted, a stubborn random source falls back to the far end
+- tuning speed, direction and the two ends of the dial
+- the glitch amount: full when far, clear on the station, proportional in between
+- locking: the score after `LOCK_DELAY`, the lock building up and resetting, a new station after each lock
+- the clock: counting down, ending the round once, and starting a fresh round on reset
+
+Enable the test target when configuring, build it, and run the executable:
 
 ```bash
-axmol build
+axmol build -p osx -a arm64 -f -xc '-D_AX_TESTS=ON'
+cmake --build build --target Axmol-Demo-SignalLock_test --config RelWithDebInfo
+build/bin/Axmol-Demo-SignalLock_test/RelWithDebInfo/Axmol-Demo-SignalLock_test.app/Contents/MacOS/Axmol-Demo-SignalLock_test
 ```
 
-Available targets and build options may depend on your operating system and Axmol installation. Consult the Axmol build documentation for the appropriate platform-specific command.
+Pass `-D_AX_TESTS=OFF` when you are done to go back to building only the game.
 
-## Learning from the Examples
+## Source layout
 
-These projects may be useful for exploring topics such as:
-
-* Scene and node management
-* Touch, mouse, and keyboard input
-* Grid-based gameplay
-* Collision detection
-* Movement and animation
-* Board-game rules
-* Pathfinding
-* State management
-* Puzzle validation
-* User-interface implementation
-* Reusable gameplay components
-
-Because each example lives in an independent branch, its implementation can evolve without affecting the others.
-
-## Contributions
-
-Contributions, improvements, and bug fixes are welcome.
-
-If you would like to contribute:
-
-1. Fork the repository.
-2. Create a branch from the example you want to improve.
-3. Make and test your changes.
-4. Open a pull request describing the changes.
-
-For a new example, please keep the implementation compact and focused on a clearly identifiable game or technical concept.
+- `Source/SignalLockScene.*`: creates the nodes, connects them, and copies the state onto them.
+- `Source/SignalLockGame.*`: the dial, the hidden station, locking, score and clock.
+- `Source/SignalControls.*`: keyboard handling.
+- `Source/SignalScreen.*`: the TV, its test-pattern texture and the shader program.
+- `Source/SignalDial.*`: the ruler and the tuning arrow with its lock bar.
+- `Source/SignalHud.*`, `Source/SignalGameOverLayer.*`: the on-screen labels and the end overlay.
+- `Shaders/tv_glitch.frag`: the glitch fragment shader.
+- `Tests/`: unit tests for `SignalLockGame`.
 
 ## Disclaimer
 
-This repository is primarily intended for experimentation and education. The examples may simplify architecture, error handling, content pipelines, or platform-specific considerations in order to keep the demonstrated concepts easy to understand.
+This project is intended for experimentation and education. It simplifies architecture, error handling and content in order to keep the concepts easy to follow.
 
 ## License
 
-This repository is licensed under the MIT License.
-
-You are free to use, modify, and distribute the source code, including in
-commercial projects, provided that the original copyright notice and license
-are retained. See the [LICENSE](LICENSE) file for details.
+This repository is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 Third-party assets and dependencies may be subject to their own licenses.
