@@ -71,9 +71,9 @@ bool AppDelegate::applicationDidFinishLaunching()
     {
 #if (AX_TARGET_PLATFORM != AX_PLATFORM_ANDROID) && (AX_TARGET_PLATFORM != AX_PLATFORM_IOS)
         renderView = RenderViewImpl::createWithRect(
-            "AxmolExamples", ax::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+            "Axmol-Demo-SignalLock", ax::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
 #else
-        renderView = RenderViewImpl::create("AxmolExamples");
+        renderView = RenderViewImpl::create("Axmol-Demo-SignalLock");
 #endif
         director->setRenderView(renderView);
     }
